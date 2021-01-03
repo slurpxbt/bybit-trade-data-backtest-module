@@ -14,13 +14,10 @@ import pickle
 # print all data for ticker
 
 
+def merge_all_price_data(ticker):
 
 
-
-def merge_price_data(ticker):
-
-
-    folder_path = "YOUR FOLDER PATH"
+    folder_path = "your folder path"
 
 
     print("merging.....")
@@ -63,5 +60,54 @@ def merge_price_data(ticker):
     pickle.dump(price_data, open(f"{folder_path}/price_data/{ticker}.p", "wb"))
 
 
-merge_price_data("BTCUSD")
-merge_price_data("ETHUSD")
+#merge_all_price_data("BTCUSD")
+#merge_all_price_data("ETHUSD")
+
+
+
+
+def append_new_trade_data_files(ticker):
+    folder_path = "your folder path"
+
+    file_path = f"{folder_path}/price_data/{ticker}.p"
+
+    price_data = pickle.load(open(file_path, "rb"))
+    
+    print(price_data)
+
+    last_date = price_data.iloc[-1]["timestamp"].date()
+    last_day = last_date.day
+    last_month = last_date.month
+    last_year = last_date.year
+
+    dates_tmp = []
+    tempDate = dt.datetime(last_year,last_month,last_day).date() + dt.timedelta(days=1)
+    #dates_tmp.append(str(tempDate))
+   
+
+    if tempDate != dt.datetime.now().date():
+        while tempDate < dt.datetime.today().date() - dt.timedelta(days=1):
+            tempDate = tempDate + dt.timedelta(days=1)
+            dates_tmp.append(str(tempDate))
+
+    if len(dates_tmp) > 0:
+        print(dates_tmp)
+        for day in dates_tmp:
+            file_path = f"{folder_path}/data/{ticker}/{day}"
+
+            if os.path.exists(file_path):
+                data = pd.read_csv(file_path,parse_dates=True)
+                data['timestamp'] = pd.to_datetime(data['timestamp'],unit='s')
+
+                data.drop(["tickDirection", "trdMatchID", "grossValue", "homeNotional", "foreignNotional"], axis=1, inplace=True)
+
+                price_data = price_data.append(data)
+
+        print(price_data)
+        print("dumping....")
+        pickle.dump(price_data, open(f"{folder_path}/price_data/{ticker}.p", "wb"))
+    else:
+        print("no missing data")
+
+# append_new_trade_data_files("BTCUSD")
+# append_new_trade_data_files("ETHUSD")
